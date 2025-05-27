@@ -1,3 +1,0 @@
-C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/stb-populate.dir
-C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/ALL_BUILD.dir
-C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/ZERO_CHECK.dir
