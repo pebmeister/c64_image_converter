@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/stb-populate"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/3f4e55fce5a751d7b276cb602953622f/stb-populate.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/f06c0fb50039e998a0254c5eeffc5f55/stb-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/Windows/source/repos/C64Converter/Win/_deps/stb-subbuild/CMakeFiles/81ea11c8de5649410466fed2deb5e52e/stb-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"stb-populate"
+		],
+		"name" : "stb-populate"
+	}
+}
