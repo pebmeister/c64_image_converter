@@ -11,5 +11,5 @@ extern float color_distance(const uint8_t* color1, const uint8_t* color2);
 
 // Find closest C64 palette color
 extern uint8_t find_closest_color(const uint8_t* color, 
-    const std::vector<std::array<uint8_t, 3>>& pallete);
+    const std::vector<std::array<uint8_t, 3>>& palette);
 

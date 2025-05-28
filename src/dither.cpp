@@ -5,20 +5,20 @@
 
 // Apply Floyd-Steinberg dithering
 void apply_dithering(uint8_t* image, int width, int height, int channels, 
-    const std::vector<std::array<uint8_t, 3>>& pallete)
+    const std::vector<std::array<uint8_t, 3>>& palette)
 {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int idx = (y * width + x) * channels;
 
-            uint8_t palette_idx = find_closest_color(&image[idx], pallete);
-            int error_r = image[idx] - pallete[palette_idx][0];
-            int error_g = image[idx + 1] - pallete[palette_idx][1];
-            int error_b = image[idx + 2] - pallete[palette_idx][2];
+            uint8_t palette_idx = find_closest_color(&image[idx], palette);
+            int error_r = image[idx] - palette[palette_idx][0];
+            int error_g = image[idx + 1] - palette[palette_idx][1];
+            int error_b = image[idx + 2] - palette[palette_idx][2];
 
-            image[idx] = pallete[palette_idx][0];
-            image[idx + 1] = pallete[palette_idx][1];
-            image[idx + 2] = pallete[palette_idx][2];
+            image[idx] = palette[palette_idx][0];
+            image[idx + 1] = palette[palette_idx][1];
+            image[idx + 2] = palette[palette_idx][2];
 
             // Distribute error to neighboring pixels
             if (x + 1 < width) {
