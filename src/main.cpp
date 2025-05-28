@@ -19,12 +19,38 @@
 int main(int argc, char** argv) {
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " <input_image> <output_image> [--dither]\n"
-            << "Example: " << argv[0] << " input.png output.png --dither" << std::endl;
+            << "Example: " << argv[0] << " input.png output.png [--dither] (--multicolor || --hires)" << std::endl;
         return 1;
     }
-    
-    bool use_dithering = (argc > 3 && std::string(argv[3]) == "--dither");
-    
+
+
+    bool use_dithering = false, use_hires = false, use_multicolor = false;
+
+    for (auto arg = 3; arg < argc; ++arg) {
+        if (std::string(argv[arg]) == "--dither") {
+            use_dithering = true;
+            continue;
+        }
+        if (std::string(argv[arg]) == "--hires") {
+            use_hires = true;
+            continue;
+        }
+        if (std::string(argv[arg]) == "--multicolor") {
+            use_multicolor = true;
+            continue;
+        }
+    }
+
+    if (use_hires && use_multicolor) {
+        std::cerr << "Can not specify both multicolor and hires" << std::endl;
+        return 1;;
+    }
+
+    if (!(use_hires || use_multicolor)) {
+        std::cerr << "Mutlticolor or hires must be specified" << std::endl;
+        return 1;;
+    }
+
     // Load input image (force 3 channels RGB)
     int width, height, channels;
     uint8_t* image = stbi_load(argv[1], &width, &height, &channels, 3);
@@ -53,17 +79,14 @@ int main(int argc, char** argv) {
     std::vector<uint8_t> scaled_image(target_width * target_height * 3);
     scale_to_c64(image, width, height, scaled_image.data(), target_width, target_height, 3);    
 
-    bool use_block_reduction = (argc > 3 && std::string(argv[3]) == "--hires");
-    bool use_block_multi_color_reduction = (argc > 3 && std::string(argv[3]) == "--multicolor");
-
-    if (use_block_reduction) {
+    if (use_hires) {
         convert_to_c64_hires(scaled_image.data(), target_width, target_height);
     }
-    if (use_block_multi_color_reduction) {
+    else if (use_multicolor) {
         convert_to_c64_multicolor(scaled_image.data(), target_width, target_height);
     }
-    else if (use_dithering) {
-        apply_dithering(scaled_image.data(), target_width, target_height, 3, c64_palette);
+    if (use_dithering) {
+        apply_floyd_steinberg(scaled_image.data(), target_width, target_height);
     }
     else {
         // Simple color quantization
