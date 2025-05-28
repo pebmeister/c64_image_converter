@@ -2,6 +2,19 @@
 #include <cmath>
 #include <vector>
 #include "pallet.h"
+#include <string>
+
+
+const std::vector<std::string> c64_color_names = {
+    "Black", "White", "Red", "Cyan", "Purple", "Green", "Blue", "Yellow",
+    "Orange", "Brown", "Light Red", "Dark Grey", "Medium Grey",
+    "Light Green", "Light Blue", "Light Grey"
+};
+
+std::string get_color_name(uint8_t color_index)
+{
+    return (color_index < c64_color_names.size()) ? c64_color_names[color_index] : "Unknown";
+}
 
 // Commodore 64 color palette (RGB values)
 const std::vector<std::array<uint8_t, 3>> c64_palette = {{

@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
     bool use_block_multi_color_reduction = (argc > 3 && std::string(argv[3]) == "--multicolor");
 
     if (use_block_reduction) {
-        reduce_colors_per_block(scaled_image.data(), target_width, target_height, 3);
+        convert_to_c64_hires(scaled_image.data(), target_width, target_height);
     }
     if (use_block_multi_color_reduction) {
-        reduce_colors_per_multicolor_block(scaled_image.data(), target_width, target_height, 3);
+        convert_to_c64_multicolor(scaled_image.data(), target_width, target_height);
     }
     else if (use_dithering) {
         apply_dithering(scaled_image.data(), target_width, target_height, 3, c64_palette);

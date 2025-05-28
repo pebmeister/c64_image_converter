@@ -4,6 +4,16 @@
 #include "blockreducer.h"
 #include "pallet.h"
 
+void convert_to_c64_hires(uint8_t* image, int width, int height, int bg_color)
+{
+    reduce_colors_per_block(image, width, height, 3, c64_palette, bg_color, true);
+}
+
+void convert_to_c64_multicolor(uint8_t* image, int width, int height, int bg_color)
+{
+    reduce_colors_per_multicolor_block(image, width, height, 3, c64_palette, bg_color, true);
+}
+
 void reduce_colors_per_multicolor_block(uint8_t* image, int width, int height, int channels,
     const std::vector<std::array<uint8_t, 3>>&palette,
     int default_bg_index, bool c64_constraints)
