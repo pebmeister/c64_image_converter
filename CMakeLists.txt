@@ -12,7 +12,19 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 # Source files
-set(SOURCE_FILES src/main.cpp)
+set(SOURCE_FILES 
+    src/main.cpp 
+    src/dither.cpp
+    src/dither.h
+    src/preview.cpp
+    src/preview.h
+    src/pallet.cpp
+    src/pallet.h
+    src/scale.cpp
+    src/scale.h
+    src/blockreducer.cpp
+    src/blockreducer.h
+    )
 
 # Executable
 add_executable(c64_converter ${SOURCE_FILES})
