@@ -8,6 +8,8 @@ extern const std::vector<std::array<uint8_t, 3>> c64_palette;
 
 // Calculate Euclidean distance between two RGB colors
 extern float color_distance(const uint8_t* color1, const uint8_t* color2);
+extern uint8_t find_color_index(const uint8_t* color, const std::vector<std::array<uint8_t, 3>>& pallette);
+extern float color_distance(const uint8_t* color1, int index);
 
 // Find closest C64 palette color
 extern uint8_t find_closest_color(const uint8_t* color, 

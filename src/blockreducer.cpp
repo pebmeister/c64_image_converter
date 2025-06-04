@@ -3,154 +3,173 @@
 #include <vector>
 #include "blockreducer.h"
 #include "pallet.h"
+#include <cassert>
+#include <map>
+
+void reduce_colors_per_multicolor_block(uint8_t* image, int width, int height, int channels,
+    const std::vector<std::array<uint8_t, 3>>& palette = c64_palette);
+
+void reduce_colors_per_block(uint8_t* image, int width, int height, int channels,
+    const std::vector<std::array<uint8_t, 3>>& palette = c64_palette);
+
 
 void convert_to_c64_hires(uint8_t* image, int width, int height, int bg_color)
 {
-    reduce_colors_per_block(image, width, height, 3, c64_palette, bg_color, true);
+    reduce_colors_per_block(image, width, height, 3, c64_palette);
 }
 
 void convert_to_c64_multicolor(uint8_t* image, int width, int height, int bg_color)
 {
-    reduce_colors_per_multicolor_block(image, width, height, 3, c64_palette, bg_color, true);
+    reduce_colors_per_multicolor_block(image, width, height, 3, c64_palette);
 }
 
 void reduce_colors_per_multicolor_block(uint8_t* image, int width, int height, int channels,
-    const std::vector<std::array<uint8_t, 3>>&palette,
-    int default_bg_index, bool c64_constraints)
+    const std::vector<std::array<uint8_t, 3>>& palette)
 {
-    if (!image || width <= 0 || height <= 0 || channels < 3 || palette.empty()) return;
-
-    const int block_w = 4, block_h = 8; // C64 multicolor block size
     const int palette_size = static_cast<int>(palette.size());
+    assert(palette_size == 16);
+    const int block_width = 4;  // Multicolor blocks are 4x8 pixels
+    const int block_height = 8;
 
-    for (int by = 0; by < height; by += block_h) {
-        for (int bx = 0; bx < width; bx += block_w) {
-            std::vector<int> color_count(palette_size, 0);
+    std::map<std::pair<int, int>, std::array<int, 16>> colorfreqdict;
 
-            // Count colors in block
-            for (int y = 0; y < block_h && (by + y) < height; ++y) {
-                for (int x = 0; x < block_w && (bx + x) < width; ++x) {
-                    int idx = ((by + y) * width + (bx + x)) * channels;
-                    color_count[find_closest_color(&image[idx], palette)]++;
+    // Step 1: Get frequency of colors in each 4x8 block
+    for (auto y = 0; y < height; y++) {
+        auto block_row = y / block_height;
+
+        for (auto x = 0; x < width; x++) {
+            auto block_col = x / block_width;
+
+            if (colorfreqdict.find({ block_row, block_col }) == colorfreqdict.end()) {
+                colorfreqdict[{block_row, block_col}] = { 0 };
+            }
+
+            auto idx = (y * width + x) * 3;
+            uint8_t color_idx = find_closest_color(&image[idx], palette);
+            colorfreqdict[{block_row, block_col}][color_idx]++;
+        }
+    }
+
+    // Step 2: For each block, select 3 most common colors + background (black)
+    std::map<std::pair<int, int>, std::array<uint8_t, 4>> block_colors;
+    for (auto block_row = 0; block_row < height / block_height; block_row++) {
+        for (auto block_col = 0; block_col < width / block_width; block_col++) {
+            auto& freq = colorfreqdict[{block_row, block_col}];
+
+            // Find top 3 colors (excluding background)
+            std::array<uint8_t, 3> top_colors = { 0, 0, 0 };
+            for (int i = 1; i < 16; i++) { // Skip background (0)
+                if (freq[i] > freq[top_colors[0]]) {
+                    top_colors[2] = top_colors[1];
+                    top_colors[1] = top_colors[0];
+                    top_colors[0] = i;
+                }
+                else if (freq[i] > freq[top_colors[1]]) {
+                    top_colors[2] = top_colors[1];
+                    top_colors[1] = i;
+                }
+                else if (freq[i] > freq[top_colors[2]]) {
+                    top_colors[2] = i;
                 }
             }
 
-            // Prepare color candidates (excluding background)
-            std::vector<std::pair<int, int>> freq;
-            for (int i = 0; i < palette_size; ++i) {
-                if (color_count[i] > 0 && (!c64_constraints || i != default_bg_index)) {
-                    freq.emplace_back(color_count[i], i);
+            // Store colors: [background, mc1, mc2, mc3]
+            block_colors[{block_row, block_col}] = { 0, top_colors[0], top_colors[1], top_colors[2] };
+        }
+    }
+
+    // Step 3: Remap pixels to their closest selected color
+    for (auto y = 0; y < height; y++) {
+        auto block_row = y / block_height;
+
+        for (auto x = 0; x < width; x++) {
+            auto block_col = x / block_width;
+            auto& colors = block_colors[{block_row, block_col}];
+
+            auto idx = (y * width + x) * 3;
+            uint8_t original_idx = find_closest_color(&image[idx], palette);
+
+            // Find closest color from our selected 4
+            float min_dist = FLT_MAX;
+            uint8_t best_color = 0;
+            for (int i = 0; i < 4; i++) {
+                float dist = color_distance(&image[idx], colors[i]);
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    best_color = colors[i];
                 }
             }
 
-            // Handle C64's 3+1 color limitation
-            std::array<int, 4> block_colors;
-            if (c64_constraints) {
-                block_colors[0] = default_bg_index; // Fixed background
-
-                // Sort by frequency and take top 3
-                std::sort(freq.begin(), freq.end(), std::greater<>());
-                for (int i = 0; i < 3; ++i) {
-                    block_colors[i + 1] = (i < freq.size()) ? freq[i].second :
-                        (i == 0) ? 1 : (block_colors[i] + 1) % palette_size;
-                }
-            }
-            else {
-                // Non-C64 mode: take top 4 colors
-                std::sort(freq.begin(), freq.end(), std::greater<>());
-                for (int i = 0; i < 4; ++i) {
-                    block_colors[i] = (i < freq.size()) ? freq[i].second :
-                        (i == 0) ? 0 : (block_colors[i - 1] + 1) % palette_size;
-                }
-            }
-
-            // Remap pixels
-            for (int y = 0; y < block_h && (by + y) < height; ++y) {
-                for (int x = 0; x < block_w && (bx + x) < width; ++x) {
-                    int idx = ((by + y) * width + (bx + x)) * channels;
-
-                    // Find closest from our selected colors
-                    float min_dist = std::numeric_limits<float>::max();
-                    int best_idx = 0;
-                    for (int i = 0; i < 4; ++i) {
-                        float dist = color_distance(&image[idx], palette[block_colors[i]].data());
-                        if (dist < min_dist) {
-                            min_dist = dist;
-                            best_idx = i;
-                        }
-                    }
-
-                    // Apply color
-                    const auto& color = palette[block_colors[best_idx]];
-                    std::copy(color.begin(), color.end(), &image[idx]);
-                }
+            // Set pixel to closest color
+            for (int i = 0; i < 3; i++) {
+                image[idx + i] = palette[best_color][i];
             }
         }
     }
 }
 
-void reduce_colors_per_block(uint8_t* image, int width, int height, int channels, 
-    const std::vector<std::array<uint8_t, 3>>&palette,
-    int default_bg_index, bool c64_constraints)
+void reduce_colors_per_block(uint8_t* image, int width, int height, int channels,
+    const std::vector<std::array<uint8_t, 3>>& palette)
 {
-
-    if (!image || width <= 0 || height <= 0 || channels < 3 || palette.empty()) return;
-
-    const int block_size = 8; // C64 character size
     const int palette_size = static_cast<int>(palette.size());
+    assert(palette_size == 16);
+    std::map<std::pair<int, int>, std::array<int, 16>> colorfreqdict;
+    // step 1 get the frequency of each 8x8 bloack
+    for (auto y = 0; y < height; y++) {
+        auto row = y / 8;
 
-    for (int by = 0; by < height; by += block_size) {
-        for (int bx = 0; bx < width; bx += block_size) {
-            std::vector<int> color_count(palette_size, 0);
+        for (auto x = 0; x < width; ++x) {
+            auto ch = x / 8;
 
-            // Count colors in block
-            for (int y = 0; y < block_size && (by + y) < height; ++y) {
-                for (int x = 0; x < block_size && (bx + x) < width; ++x) {
-                    int idx = ((by + y) * width + (bx + x)) * channels;
-                    color_count[find_closest_color(&image[idx], palette)]++;
+            if (colorfreqdict.find({ row, ch }) == colorfreqdict.end()) {
+                colorfreqdict[{row, ch}] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            }
+            auto& freq = colorfreqdict[{row, ch}];
+
+            auto idx = (y * width + x) * 3;
+            uint8_t color_idx = find_closest_color(&image[idx], c64_palette);
+            freq[color_idx]++;
+        }
+    }
+
+    std::map<std::pair<int, int>, std::array<int, 2>> colordict;
+    for (auto row = 0; row < 25; ++row) {
+        for (auto ch = 0; ch < 40; ++ch) {
+            auto& freq = colorfreqdict[{row, ch}];
+            auto hi = 0;
+            auto next = 0;
+
+            for (auto i = 1; i < 16; ++i) {
+                if (freq[i] > freq[hi]) {
+                    next = hi;
+                    hi = i;
+                }
+                else if (freq[i] > freq[next]) {
+                    next = i;
                 }
             }
 
-            // Find top colors (excluding background if constrained)
-            int first = 0, second = 0;
-            for (int i = 0; i < palette_size; ++i) {
-                if (c64_constraints && i == default_bg_index) continue;
+            colordict[{row, ch}][0] = hi;
+            colordict[{row, ch}][1] = next;
+        }
+    }
 
-                if (color_count[i] > color_count[first]) {
-                    second = first;
-                    first = i;
-                }
-                else if (color_count[i] > color_count[second]) {
-                    second = i;
-                }
-            }
+    // Remap pixels
+    for (auto y = 0; y < height; y++) {
+        auto row = y / 8;
 
-            // Ensure we have two distinct colors
-            if (first == second) {
-                second = (first + palette_size / 2) % palette_size;
-            }
+        for (auto x = 0; x < width; ++x) {
+            auto ch = x / 8;
 
-            // Remap pixels
-            for (int y = 0; y < block_size && (by + y) < height; ++y) {
-                for (int x = 0; x < block_size && (bx + x) < width; ++x) {
-                    int idx = ((by + y) * width + (bx + x)) * channels;
+            auto& color = colordict[{row, ch}];
+            auto idx = (y * width + x) * 3;
 
-                    // Compare to both colors and background
-                    float dists[3] = {
-                        color_distance(&image[idx], palette[first].data()),
-                        color_distance(&image[idx], palette[second].data()),
-                        c64_constraints ? color_distance(&image[idx], palette[default_bg_index].data())
-                                        : std::numeric_limits<float>::max()
-                    };
+            float d0 = color_distance(&image[idx], color[0]);
+            float d1 = color_distance(&image[idx], color[1]);
 
-                    int best = (dists[2] < dists[0] && dists[2] < dists[1]) ? default_bg_index :
-                        (dists[0] < dists[1]) ? first : second;
-
-                    // Apply color
-                    const auto& color = palette[best];
-                    std::copy(color.begin(), color.end(), &image[idx]);
-                }
-            }
+            auto n = (d0 < d1) ? 0 : 1;
+            for (auto i = 0; i < 3; ++i)
+                image[idx + i] = c64_palette[color[n]][i];
         }
     }
 }

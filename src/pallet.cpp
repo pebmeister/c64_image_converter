@@ -44,6 +44,15 @@ float color_distance(const uint8_t* color1, const uint8_t* color2) {
     return std::sqrt(r_diff * r_diff + g_diff * g_diff + b_diff * b_diff);
 }
 
+float color_distance(const uint8_t* color1, int index)
+{
+    auto color2 = c64_palette[index];
+    float r_diff = static_cast<float>(color1[0]) - color2[0];
+    float g_diff = static_cast<float>(color1[1]) - color2[1];
+    float b_diff = static_cast<float>(color1[2]) - color2[2];
+    return std::sqrt(r_diff * r_diff + g_diff * g_diff + b_diff * b_diff);
+}
+
 // Find closest C64 palette color
 uint8_t find_closest_color(const uint8_t* color, const std::vector<std::array<uint8_t, 3>>& pallette) {
     uint8_t closest = 0;
@@ -58,4 +67,22 @@ uint8_t find_closest_color(const uint8_t* color, const std::vector<std::array<ui
     }
     
     return closest;
+}
+
+uint8_t find_color_index(const uint8_t* color, const std::vector<std::array<uint8_t, 3>>& pallette)
+{
+    for (uint8_t i = 0; i < pallette.size(); ++i) {
+        auto& pcolor = pallette[i];
+
+        auto found = true;
+        for (auto c = 0; c < 3; ++c) {
+            if (color[c] != pcolor[c]) {
+                found = false;
+                break;
+            }
+        }
+        if (found)
+            return i;
+    }
+    return -1;
 }

@@ -21,7 +21,11 @@ void show_preview(const uint8_t* image, int width, int height)
     }
     
     texture.update(pixels.data());
-    
+    auto sz = window.getSize();
+    sz.x *= 5;
+    sz.y *= 5;
+    window.setSize(sz);
+    window.setPosition({ 50,50 });
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -39,4 +43,3 @@ void show_preview(const uint8_t* image, int width, int height) {
     std::cout << "Preview not available (SFML not enabled)" << std::endl;
 }
 #endif
-
